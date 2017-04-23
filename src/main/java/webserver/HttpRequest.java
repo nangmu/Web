@@ -7,32 +7,44 @@ import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import util.HttpRequestUtils;
 import util.HttpRequestUtils.Pair;
 import util.IOUtils;
 
 public class HttpRequest {
 
+    private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
 	BufferedReader br;
 	String httpMethod;
 	String requestPath;
     String query=null;
-    Map<String,String> queryMap = null;
-    Map<String,String> headerMap = new HashMap<>();
-    Map<String,String> cookieMap=null;
+    Map<String,String> parameter = null;
+    Map<String,String> header = new HashMap<>();
+    Map<String,String> cookie=null;
 	String line=null;
 	
     public HttpRequest(InputStream in){
 		br =new BufferedReader(new InputStreamReader(in));
+		try{
+		go();
+		}catch(IOException ioe){
+			ioe.printStackTrace();
+		}
 	}
     
-    public void go() throws IOException{
+    private void go() throws IOException{
     	settingRequestLine();
     	service();
     }
     
     private void settingRequestLine() throws IOException{
     	String requestLine = br.readLine();
+
+    	log.debug("\n*******************[REQUEST LINE]******************\n\n"+requestLine
+    			+"\n\n***************************************************");
     	String[] tokens = requestLine.split(" ");
         httpMethod = tokens[0];
     	requestPath = tokens[1];
@@ -44,8 +56,8 @@ public class HttpRequest {
         if(httpMethod.equals("POST")){
         	post();
         }
-   	 	if(headerMap.get("Cookie")!=null){
-    		cookieMap = HttpRequestUtils.parseCookies(headerMap.get("Cookie"));
+   	 	if(header.get("Cookie")!=null){
+    		cookie = HttpRequestUtils.parseCookies(header.get("Cookie"));
    	 	}
     }
     
@@ -53,24 +65,24 @@ public class HttpRequest {
     	if(requestPath.contains("?")){
     	query = requestPath.substring(requestPath.indexOf("?")+1);
     	requestPath = requestPath.substring(0, requestPath.indexOf("?"));
-    	queryMap = HttpRequestUtils.parseQueryString(query);
+    	parameter = HttpRequestUtils.parseQueryString(query);
     	}
     	while((line=br.readLine())!=null){
     		//log.debug(line);
     		if(line.equals("")) break;
     		Pair pair = HttpRequestUtils.parseHeader(line);
-    		headerMap.put(pair.getKey(), pair.getValue());
+    		header.put(pair.getKey(), pair.getValue());
     	}
     }
     
     private void post() throws IOException{
     	while(!(line=br.readLine()).equals("")){
 			Pair pair = HttpRequestUtils.parseHeader(line);
-			headerMap.put(pair.getKey(), pair.getValue());
+			header.put(pair.getKey(), pair.getValue());
 		}
-    	if(headerMap.get("Content-Length")!=null){
-    	query = IOUtils.readData(br, Integer.parseInt(headerMap.get("Content-Length")));
-		queryMap = HttpRequestUtils.parseQueryString(query);
+    	if(header.get("Content-Length")!=null){
+    	query = IOUtils.readData(br, Integer.parseInt(header.get("Content-Length")));
+		parameter = HttpRequestUtils.parseQueryString(query);
     	}
     }
 
@@ -90,28 +102,28 @@ public class HttpRequest {
 		this.requestPath = requestPath;
 	}
 
-	public Map<String, String> getQueryMap() {
-		return queryMap;
+	public Map<String, String> getParameter() {
+		return parameter;
 	}
 
-	public void setQueryMap(Map<String, String> queryMap) {
-		this.queryMap = queryMap;
+	public void setParameter(Map<String, String> queryMap) {
+		this.parameter = queryMap;
 	}
 
-	public Map<String, String> getHeaderMap() {
-		return headerMap;
+	public Map<String, String> getHeader() {
+		return header;
 	}
 
-	public void setHeaderMap(Map<String, String> headerMap) {
-		this.headerMap = headerMap;
+	public void setHeader(Map<String, String> headerMap) {
+		this.header = headerMap;
 	}
 
-	public Map<String, String> getCookieMap() {
-		return cookieMap;
+	public Map<String, String> getCookie() {
+		return cookie;
 	}
 
-	public void setCookieMap(Map<String, String> cookieMap) {
-		this.cookieMap = cookieMap;
+	public void setCookie(Map<String, String> cookieMap) {
+		this.cookie = cookieMap;
 	}
     
     

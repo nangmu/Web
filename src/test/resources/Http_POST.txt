@@ -1,0 +1,7 @@
+POST /user/create HTTP/1.1
+Host: localhost:8080
+Content-Length: 29
+Connection: keep-alive
+Accept: */*
+
+userId=id&password=pw&name=SW
