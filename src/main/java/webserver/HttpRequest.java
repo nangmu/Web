@@ -18,12 +18,11 @@ public class HttpRequest {
 
     private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
 	BufferedReader br;
-	String httpMethod;
+	private HttpMethod method;
 	String requestPath;
-    String query=null;
-    Map<String,String> parameter = null;
+    Map<String,String> parameter = new HashMap<>();
     Map<String,String> header = new HashMap<>();
-    Map<String,String> cookie=null;
+    Map<String,String> cookie=new HashMap<>();
 	String line=null;
 	
     public HttpRequest(InputStream in){
@@ -36,24 +35,34 @@ public class HttpRequest {
 	}
     
     private void go() throws IOException{
-    	settingRequestLine();
+    	if(!setRequestLine()){
+    		return;
+    	}
     	service();
     }
     
-    private void settingRequestLine() throws IOException{
+    private boolean setRequestLine() throws IOException{
     	String requestLine = br.readLine();
-
-    	log.debug("\n*******************[REQUEST LINE]******************\n\n"+requestLine
-    			+"\n\n***************************************************");
+    	if(requestLine ==null){
+    		log.error("Http Request Header가 비어있습니다.");
+    		return false;
+    	}
+    	if(requestLine.length()<3){
+    		log.error("Http Request Line 형식이 잘못되었습니다.");
+    		return false;
+    	}
+    	
     	String[] tokens = requestLine.split(" ");
-        httpMethod = tokens[0];
+    	
+    	method = HttpMethod.valueOf(tokens[0]);
     	requestPath = tokens[1];
+    	return true;
     }
     private void service() throws IOException{
-    	if(httpMethod.equals("GET")){
+    	if(method.isGET()){
         	get();
          }
-        if(httpMethod.equals("POST")){
+        if(method.isPOST()){
         	post();
         }
    	 	if(header.get("Cookie")!=null){
@@ -63,7 +72,7 @@ public class HttpRequest {
     
     private void get() throws IOException{
     	if(requestPath.contains("?")){
-    	query = requestPath.substring(requestPath.indexOf("?")+1);
+    	String query = requestPath.substring(requestPath.indexOf("?")+1);
     	requestPath = requestPath.substring(0, requestPath.indexOf("?"));
     	parameter = HttpRequestUtils.parseQueryString(query);
     	}
@@ -81,50 +90,24 @@ public class HttpRequest {
 			header.put(pair.getKey(), pair.getValue());
 		}
     	if(header.get("Content-Length")!=null){
-    	query = IOUtils.readData(br, Integer.parseInt(header.get("Content-Length")));
+    	String query = IOUtils.readData(br, Integer.parseInt(header.get("Content-Length")));
 		parameter = HttpRequestUtils.parseQueryString(query);
     	}
     }
 
-	public String getHttpMethod() {
-		return httpMethod;
+	public HttpMethod getHttpMethod() {
+		return method;
 	}
-
-	public void setHttpMethod(String httpMethod) {
-		this.httpMethod = httpMethod;
-	}
-
 	public String getRequestPath() {
 		return requestPath;
 	}
-
-	public void setRequestPath(String requestPath) {
-		this.requestPath = requestPath;
+	public String getParameter(String key) {
+		return parameter.get(key);
 	}
-
-	public Map<String, String> getParameter() {
-		return parameter;
+	public String getHeader(String key) {
+		return header.get(key);
 	}
-
-	public void setParameter(Map<String, String> queryMap) {
-		this.parameter = queryMap;
+	public String getCookie(String key) {
+		return cookie.get(key);
 	}
-
-	public Map<String, String> getHeader() {
-		return header;
-	}
-
-	public void setHeader(Map<String, String> headerMap) {
-		this.header = headerMap;
-	}
-
-	public Map<String, String> getCookie() {
-		return cookie;
-	}
-
-	public void setCookie(Map<String, String> cookieMap) {
-		this.cookie = cookieMap;
-	}
-    
-    
 }

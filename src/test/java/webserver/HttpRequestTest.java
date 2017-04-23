@@ -17,10 +17,10 @@ public class HttpRequestTest {
 				"Http_GET.txt"));
 		HttpRequest request = new HttpRequest(in);
 		
-		assertEquals("GET", request.getHttpMethod());
-		assertEquals("keep-alive",request.getHeader().get("Connection"));
-		assertEquals("id", request.getParameter().get("userId"));
-		assertEquals("SW",request.getParameter().get("name"));
+		assertEquals(HttpMethod.GET, request.getHttpMethod());
+		assertEquals("keep-alive",request.getHeader("Connection"));
+		assertEquals("id", request.getParameter("userId"));
+		assertEquals("SW",request.getParameter("name"));
 		assertEquals("/user/create", request.getRequestPath());
 	}
 	
@@ -39,10 +39,10 @@ public class HttpRequestTest {
 				"Http_POST.txt"));
 		HttpRequest request = new HttpRequest(in);
 		
-		assertEquals("POST",request.getHttpMethod());
-		assertEquals("keep-alive",request.getHeader().get("Connection"));
-		assertEquals("id", request.getParameter().get("userId"));
-		assertEquals("SW",request.getParameter().get("name"));
+		assertEquals(HttpMethod.POST,request.getHttpMethod());
+		assertEquals("keep-alive",request.getHeader("Connection"));
+		assertEquals("id", request.getParameter("userId"));
+		assertEquals("SW",request.getParameter("name"));
 		assertEquals("/user/create", request.getRequestPath());
 		}
 	

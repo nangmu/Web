@@ -20,14 +20,11 @@ public class HttpResponse {
 	private static final String EMPTY_LINE = "\r\n";
 	DataOutputStream dos;
 	
-	byte[] body=null;
     Map<String,String> header = new HashMap<>();
     Map<String,String> cookie= new HashMap<>();
 	
 	public HttpResponse(OutputStream os){
 		dos = new DataOutputStream(os);
-	    header = new HashMap<>();
-	    cookie= new HashMap<>();
 	}
 	
 	// Set-Cookie: aa=aa; bb=bb; cc=cc
@@ -43,10 +40,7 @@ public class HttpResponse {
 	public void sendRedirect(String page){
    	 try {
             dos.writeBytes("HTTP/1.1 302 Found \r\n");
-            if(cookie.size()>0){
-            	String cookieString = arrangeCookie();
-                dos.writeBytes("Set-Cookie: "+cookieString+"\r\n");
-            }
+        	processHeaders();
             dos.writeBytes("Location: http://localhost:8080"+page +"\r\n");
             dos.writeBytes("\r\n");
             dos.flush();
@@ -55,15 +49,19 @@ public class HttpResponse {
         }
    }
 
-	public void forward(String requestPath) {
+	public void forward(String url) {
 		try {
-			Path path = new File("./webapp" + requestPath).toPath();
+			Path path = new File("./webapp" + url).toPath();
 			byte[] body = Files.readAllBytes(path);
-			if(requestPath.endsWith(".css")){
-				responseCssHeader(body.length);
+			if(url.endsWith(".css")){
+				header.put("Contente-Type", "text/css");
+			}else if(url.endsWith(".js")){
+				header.put("Content-Type", "application/javascript");
 			}else{
-				response200Header(body.length);
+				header.put("Content-Type", "text/html;charset=utf-8");
 			}
+			header.put("Content-Length", body.length+"");
+			response200Header();
 			responseBody(body);
 		} catch (IOException ioe) {
 			log.error(ioe.getMessage());
@@ -71,62 +69,50 @@ public class HttpResponse {
 	}
 	public void forward(byte[] body) {
 		try {
-			response200Header(body.length);
+			header.put("Content-Length", body.length+"");
+			response200Header();
 			responseBody(body);
 		} catch (IOException ioe) {
 			log.error(ioe.getMessage());
 		}
 	}
-	private void responseCssHeader(int lengthOfBodyContent) throws IOException{
-			dos.writeBytes("HTTP/1.1 200 OK \r\n");
-			dos.writeBytes("Content-Type: text/css;charset=utf-8\r\n");
-			dos.writeBytes("Content-Length: " + lengthOfBodyContent + "\r\n");
-			if(cookie.size()>0){
-            	String cookieString = arrangeCookie();
-                dos.writeBytes("Set-Cookie: "+cookieString+"\r\n");
-            }
-			dos.writeBytes("\r\n");
-	}
-	private void response200Header(int lengthOfBodyContent) throws IOException {
+	private void response200Header() throws IOException {
 		dos.writeBytes("HTTP/1.1 200 OK \r\n");
-		dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
-		dos.writeBytes("Content-Length: " + lengthOfBodyContent + "\r\n");
-		if(cookie.size()>0){
-        	String cookieString = arrangeCookie();
-            dos.writeBytes("Set-Cookie: "+cookieString+"\r\n");
-        }
+		processHeaders();
 		dos.writeBytes("\r\n");
 	}
 
-   private void responseBody(byte[] body) throws IOException {
-           dos.write(body, 0, body.length);
-           dos.flush();
-   }
-
-public Map<String, String> getHeader() {
-	return header;
-}
-
-public void setHeader(Map<String, String> header) {
-	this.header = header;
-}
-
-public Map<String, String> getCookie() {
-	return cookie;
-}
-public String getCookie(String key) {
-	return cookie.get(key);
-}
-
-public void setCookie(Map<String, String> cookie) {
-	this.cookie = cookie;
-}
-public void setCookie(String key, String value) {
-	if(cookie == null){
-		cookie = new HashMap<>();
+	private void responseBody(byte[] body) throws IOException {
+		dos.write(body, 0, body.length);
+		dos.writeBytes("\r\n");
+		dos.flush();
 	}
-	cookie.put(key, value);
-}
-   
-   
+
+	public Map<String, String> getHeader() {
+		return header;
+	}
+	public String getHeader(String key) {
+		return header.get(key);
+	}
+	public void setHeader(String key, String value) {
+		header.put(key, value);
+	}
+	public Map<String, String> getCookie() {
+		return cookie;
+	}
+	public String getCookie(String key) {
+		return cookie.get(key);
+	}
+	public void setCookie(String key, String value) {
+		cookie.put(key, value);
+	}
+	private void processHeaders() throws IOException {
+		if (!cookie.isEmpty()) {
+			String cookieValue = arrangeCookie();
+			header.put("Set-Cookie", cookieValue);
+		}
+		for (String key : header.keySet()) {
+			dos.writeBytes(key + ": " + header.get(key) + EMPTY_LINE);
+		}
+	}
 }

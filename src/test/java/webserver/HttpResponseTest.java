@@ -19,10 +19,7 @@ public class HttpResponseTest {
 		FileOutputStream fos = new FileOutputStream("./farward1.txt");
 		HttpResponse response = new HttpResponse(fos);
 		
-		Map<String,String> cookie = new HashMap<>();
-		cookie.put("logined", "true");
-		cookie.put("session-id", "aaaaaaaaa");
-		response.setCookie(cookie);
+		response.setCookie("logined", "true");
 		
 		byte[] body = "Contents.........".getBytes();
 		response.forward(body);
@@ -34,10 +31,13 @@ public class HttpResponseTest {
 		HttpResponse response = new HttpResponse(fos);
 		
 		response.setCookie("aa","bb");
-		String page = "/index.html";
+		response.setCookie("aaa","bbb");
+		response.setCookie("aaaa","bbbb");
+		String page = "/js/scripts.js";
 		
 		response.forward(page);
 	}
+	
 	
 	@Test
 	public void redirectTest() throws Exception{
