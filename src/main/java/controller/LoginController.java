@@ -5,11 +5,13 @@ import model.User;
 import webserver.HttpRequest;
 import webserver.HttpResponse;
 
-public class LoginController implements Controller{
+public class LoginController extends AbstractController{
 
-	@Override
-	public void service(HttpRequest request, HttpResponse response) {
-		// TODO Auto-generated method stub
+	protected void doGet(HttpRequest request, HttpResponse response) {
+		doPost(request,response);
+	}
+
+	protected void doPost(HttpRequest request, HttpResponse response) {
 		String id = request.getParameter("userId");
 		String password = request.getParameter("password");
 
@@ -21,5 +23,4 @@ public class LoginController implements Controller{
 		response.setCookie("logined", "true");
 		response.sendRedirect("/index.html");
 	}
-
 }

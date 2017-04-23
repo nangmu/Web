@@ -5,12 +5,15 @@ import model.User;
 import webserver.HttpRequest;
 import webserver.HttpResponse;
 
-public class ListUserController implements Controller{
+public class ListUserController extends AbstractController{
 
-	@Override
-	public void service(HttpRequest request, HttpResponse response) {
+	protected void doGet(HttpRequest request, HttpResponse response) {
+		doPost(request,response);
+	}
+
+	protected void doPost(HttpRequest request, HttpResponse response) {
 		Boolean logined = false;
-		
+
 		if (request.getCookie("logined") != null) {
 			logined = Boolean.parseBoolean(request.getCookie("logined"));
 		}
@@ -30,5 +33,4 @@ public class ListUserController implements Controller{
 		byte[] body = sb.toString().getBytes();
 		response.forward(body);
 	}
-
 }
